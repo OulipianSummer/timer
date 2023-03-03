@@ -168,10 +168,10 @@ class App extends React.Component {
     }
 
     return (
-      <Row>
-        <Col>
-          <Container>
-            <Card>
+      <Container className="h-100">
+      <Row className="justify-content-center h-100 align-items-center">
+        <Col className="">
+            <Card className="shadow-lg">
               <Card.Header>
                 <h1 className="text-center">25 + 5 Clock</h1>
               </Card.Header>
@@ -179,10 +179,10 @@ class App extends React.Component {
                 <Container className="text-center d-flex flex-column">
 
                 <Row id="session-break-controls">
-                  <Col sm={12} md={6} id="break-info" className="my-5">
+                  <Col sm={12} md={6} id="break-info" className="mb-5">
                     <Row>
                       <Col>
-                        <p>
+                        <p className="h3">
                         <span id="break-label">Break Length</span>&nbsp;:&nbsp;  
                         <span id="break-length">{ breakLength }</span>
                         </p>
@@ -198,10 +198,10 @@ class App extends React.Component {
                     </Row>
                   </Col>
 
-                  <Col sm={12} md={6} id="session-info" className="my-5 d-flex flex-column">
+                  <Col sm={12} md={6} id="session-info" className="mb-5 d-flex flex-column">
                     <Row>
                       <Col>
-                        <p>
+                        <p className="h3">
                           <span id="session-label">Session Length</span>&nbsp;:&nbsp;  
                           <span id="session-length">{ sessionLength }</span>
                         </p>
@@ -221,7 +221,7 @@ class App extends React.Component {
                   
                 <Row id="timer-wrapper" className='d-flex flex-column'>
                   <Col className='text-center'>
-                    <p id="timer-label" className="h2">{ phase === PHASE_SESSION ? "Session" : "Break" }</p>
+                    <p id="timer-label" className="h3">{ phase === PHASE_SESSION ? "Session" : "Break" }</p>
                     <p id="time-left" className="h1">{ minutesRemaining }:{ secondsRemaining }</p>
                   </Col>
                 </Row>
@@ -241,9 +241,10 @@ class App extends React.Component {
                 </Container>
               </Card.Body>
             </Card>
-          </Container>
         </Col>
       </Row>
+      </Container>
+
     );
   }
 }
