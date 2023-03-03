@@ -97,7 +97,8 @@ class App extends React.Component {
   
   // Change whether or not the timer is currently running
   updateActive(){
-    let {active, breakLength, sessionLength, minutesRemaining,  secondsRemaining, phase} = this.state;
+    let {active, minutesRemaining,  secondsRemaining, phase} = this.state;
+    const {breakLength, sessionLength} = this.state;
     
     // Invert the play/pause display logic
     const newActive = !active;
@@ -115,15 +116,28 @@ class App extends React.Component {
       }
 
       // When the primary session is over, switch over to break time
-      if(minutesRemaining < 0 && breakLength > 0 && secondsRemaining > 0){
-        minutesRemaining = 0;
-        breakLength--;
+      if(minutesRemaining < 0 && secondsRemaining > 0){
+        minutesRemaining = breakLength;
+        minutesRemaining--;
         secondsRemaining = 59;
         phase = PHASE_BREAK;
         // Ring dat bell
       }
 
-      this.setState({breakLength: breakLength, minutesRemaining: minutesRemaining,secondsRemaining: secondsRemaining});
+      if(minutesRemaining === 0 && secondsRemaining === 0 && phase === PHASE_BREAK){
+        this.restart({
+          breakLength: breakLength,
+          sessionLength: sessionLength,
+          minutesRemaining: sessionLength,
+          secondsRemaining: 0,
+          active: true,
+          phase: PHASE_SESSION,
+        }, false);
+        // Ring dat bell
+        return;
+      }
+
+      this.setState({breakLength: breakLength, minutesRemaining: minutesRemaining,secondsRemaining: secondsRemaining, phase: phase});
     }
     
     if(newActive){
@@ -137,28 +151,38 @@ class App extends React.Component {
       window.clearInterval(this.intervalIdRef.current);     
     }
   }
- 
-  
-  // Restart the state to its defaults
-  restart(){
-    // Reset the timer to default
-    this.setState({
+
+  getDefaultSettings() {
+    return {     
       breakLength: 5,
       sessionLength: 25,
       minutesRemaining: 25,
       secondsRemaining: 0,
       active: false,
       phase: PHASE_SESSION,
-    });
+    };
+  }
+ 
+  
+  // Restart the state to its defaults
+  restart(settings = null, clear=true){
 
-    // Stop the timer
-    window.clearInterval(this.intervalIdRef.current);
+    // Reset the timer to default
+    if(!settings){
+      settings = this.getDefaultSettings();
+    }
+
+    // Allow custom passthrough
+    this.setState(settings);
+
+    // Stop the timer if requested
+    if(clear){
+      window.clearInterval(this.intervalIdRef.current);
+    }
   }
 
 
   
-  
-  // Render
   render() {
     let {breakLength, sessionLength, secondsRemaining, minutesRemaining, active, phase} = this.state;
 
@@ -167,8 +191,13 @@ class App extends React.Component {
       secondsRemaining = `0${secondsRemaining}`;
     }
 
+    // Format the minutesRemaining value
+    if(minutesRemaining < 10){
+      minutesRemaining = `0${minutesRemaining}`;
+    }
+
     return (
-      <Container className="h-100">
+    <Container className="h-100">
       <Row className="justify-content-center h-100 align-items-center">
         <Col className="">
             <Card className="shadow-lg">
