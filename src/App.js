@@ -15,17 +15,27 @@ const Col = ReactBootstrap.Col;
 const ButtonGroup = ReactBootstrap.ButtonGroup;
 */
 
+const PHASE_BREAK = 'break';
+const PHASE_SESSION = 'session';
+
 // React App
 class App extends React.Component {
+
+  // Construct
   constructor(props){
     super(props);
+    
+    // State obejct
     this.state = {
       breakLength: 5,
       sessionLength: 25,
-      secondsRemaining: '00',
+      minutesRemaining: 25,
+      secondsRemaining: 0,
       active: false,
-      phase: 'session',
+      phase: PHASE_SESSION,
     };
+
+   this.intervalIdRef = React.createRef();
     
     // Internal this binds
     this.breakAlter.bind(this);
@@ -36,7 +46,11 @@ class App extends React.Component {
   
   // A callback for updating the break state
   breakAlter(op){
-    let {breakLength} = this.state;
+    let {breakLength, active} = this.state;
+
+    // Ignore any input if the timer is running
+    if(active){return};
+
     switch(op){
       case '+':
         // Don't go above 60
@@ -58,7 +72,10 @@ class App extends React.Component {
   
    // A callback for updating the session state
   sessionAlter(op){
-    let {sessionLength} = this.state;
+    let {sessionLength, active} = this.state;
+
+    // Ignore any input if the timer is running
+    if(active){return;}
     switch(op){
       case '+':
         if(sessionLength < 60){
@@ -74,55 +91,82 @@ class App extends React.Component {
       break;
     }
     
-    this.setState({sessionLength: sessionLength});
+    // Update sessionLength and minutesRemaining with the same value
+    this.setState({sessionLength: sessionLength, minutesRemaining: sessionLength});
   }
   
   // Change whether or not the timer is currently running
   updateActive(){
-    let {active, breakLength, sessionLength, secondsRemaining, phase} = this.state;
-    console.log(secondsRemaining);
-    const newActive = !active;
+    let {active, breakLength, sessionLength, minutesRemaining,  secondsRemaining, phase} = this.state;
     
-    // A timer function, can be passed as a top level function to window.setTimeout and window.clearTimeout
-    const timer = (secondsRemaining, breakLength) => {
-      secondsRemaining = parseInt(secondsRemaining);
-      console.log(secondsRemaining);
-
+    // Invert the play/pause display logic
+    const newActive = !active;
+    this.setState({active: newActive});
+    
+    // The timer function. Gets called every 1000ms by setInterval
+    const timer = () => {
+      // Decrement the timer
       secondsRemaining--;
 
-      // Guard rails for the seconds values
-      if(breakLength < 0){
-        sessionLength --;
-        breakLength = 59;
+      // Guard rails for the seconds values, wraps at 60s/0s
+      if(secondsRemaining < 0){
+        minutesRemaining --;
+        secondsRemaining = 59;
       }
-    this.setState({breakLength: breakLength, secondsRemaining: secondsRemaining});
-  }
-    
-    if(newActive){
-      window.setTimeout(timer, 1000);
-    } else {
-      window.clearTimeout(timer);     
+
+      // When the primary session is over, switch over to break time
+      if(minutesRemaining < 0 && breakLength > 0 && secondsRemaining > 0){
+        minutesRemaining = 0;
+        breakLength--;
+        secondsRemaining = 59;
+        phase = PHASE_BREAK;
+        // Ring dat bell
+      }
+
+      this.setState({breakLength: breakLength, minutesRemaining: minutesRemaining,secondsRemaining: secondsRemaining});
     }
     
-    this.setState({active: newActive});
+    if(newActive){
+      const id = window.setInterval(timer, 1000);
+      
+      // Use a ref to store the id from setInterval (this API is silly, but ok)
+      this.intervalIdRef.current = id;
+    } else {
+      
+      // Clear the interval stored in a ref
+      window.clearInterval(this.intervalIdRef.current);     
+    }
   }
  
   
   // Restart the state to its defaults
   restart(){
+    // Reset the timer to default
     this.setState({
       breakLength: 5,
       sessionLength: 25,
       minutesRemaining: 25,
-      secondsRemaining: "00",
+      secondsRemaining: 0,
       active: false,
-    })
+      phase: PHASE_SESSION,
+    });
+
+    // Stop the timer
+    window.clearInterval(this.intervalIdRef.current);
   }
+
+
   
   
   // Render
   render() {
-    const {breakLength, sessionLength, minutesRemaining, secondsRemaining, active} = this.state;
+    let {breakLength, sessionLength, secondsRemaining, minutesRemaining, active, phase} = this.state;
+
+    //Format the secondsRemaining value
+    if(secondsRemaining < 10){
+      secondsRemaining = `0${secondsRemaining}`;
+    }
+
     return (
       <Row>
         <Col>
@@ -132,41 +176,53 @@ class App extends React.Component {
                 <h1 className="text-center">25 + 5 Clock</h1>
               </Card.Header>
               <Card.Body>
-                <Container className="text-center d-flex flex-column w-50">
+                <Container className="text-center d-flex flex-column">
 
                 <Row id="session-break-controls">
-                  <Col id="break-info" className="my-5 d-flex flex-column">
-                    <p>
-                      <span id="break-label">Break Length</span>&nbsp;:&nbsp;  
-                      <span id="break-length">{ breakLength }</span>
-                    </p>
-                    <Col>
-                      <ButtonGroup id="break-controls" className="col-12 col-md-6">
-                        <Button onClick={ e => this.breakAlter('-')} id="break-decrement"><i className="fas fa-minus"></i></Button>
-                        <Button onClick={e => this.breakAlter('+')} id="break-increment"><i className="fas fa-plus"></i></Button>
-                      </ButtonGroup>
-                    </Col>
+                  <Col sm={12} md={6} id="break-info" className="my-5">
+                    <Row>
+                      <Col>
+                        <p>
+                        <span id="break-label">Break Length</span>&nbsp;:&nbsp;  
+                        <span id="break-length">{ breakLength }</span>
+                        </p>
+                      </Col>
+                    </Row>
+                    <Row>
+                      <Col>
+                        <ButtonGroup id="break-controls">
+                          <Button active={active} onClick={ e => this.breakAlter('-')} id="break-decrement"><i className="fas fa-minus"></i></Button>
+                          <Button active={active} onClick={e => this.breakAlter('+')} id="break-increment"><i className="fas fa-plus"></i></Button>
+                        </ButtonGroup>
+                      </Col>
+                    </Row>
                   </Col>
 
-                  <Col id="session-info" className="my-5 d-flex flex-column">
-                    <p>
-                      <span id="session-label">Session Length</span>&nbsp;:&nbsp;  
-                      <span id="session-length">{ sessionLength }</span>
-                    </p>
-                    <Col>
-                    <ButtonGroup id="session-controls" className="col-12 col-md-6">
-                        <Button onClick={e => this.sessionAlter('-')} id="session-decrement"><i className='fas fa-minus'></i></Button>
-                        <Button onClick={e => this.sessionAlter('+')} id="session-increment"><i className="fas fa-plus"></i></Button>
-                    </ButtonGroup>
-                    </Col>
+                  <Col sm={12} md={6} id="session-info" className="my-5 d-flex flex-column">
+                    <Row>
+                      <Col>
+                        <p>
+                          <span id="session-label">Session Length</span>&nbsp;:&nbsp;  
+                          <span id="session-length">{ sessionLength }</span>
+                        </p>
+                      </Col>
+                    </Row>
+                    <Row>
+                      <Col>
+                      <ButtonGroup id="session-controls">
+                          <Button active={active} onClick={e => this.sessionAlter('-')} id="session-decrement"><i className='fas fa-minus'></i></Button>
+                          <Button active={active} onClick={e => this.sessionAlter('+')} id="session-increment"><i className="fas fa-plus"></i></Button>
+                      </ButtonGroup>
+                      </Col>
+                    </Row>
                   </Col>
                   
                 </Row>
                   
                 <Row id="timer-wrapper" className='d-flex flex-column'>
                   <Col className='text-center'>
-                    <p id="timer-label" className="h2">Session</p>
-                    <p id="time-left" className="h1">{ sessionLength }:{ secondsRemaining }</p>
+                    <p id="timer-label" className="h2">{ phase === PHASE_SESSION ? "Session" : "Break" }</p>
+                    <p id="time-left" className="h1">{ minutesRemaining }:{ secondsRemaining }</p>
                   </Col>
                 </Row>
                   
