@@ -97,8 +97,7 @@ class App extends React.Component {
   
   // Change whether or not the timer is currently running
   updateActive(){
-    let {active, minutesRemaining,  secondsRemaining, phase} = this.state;
-    const {breakLength, sessionLength} = this.state;
+    let {active} = this.state;
     
     // Invert the play/pause display logic
     const newActive = !active;
@@ -106,6 +105,8 @@ class App extends React.Component {
     
     // The timer function. Gets called every 1000ms by setInterval
     const timer = () => {
+      let {minutesRemaining,  secondsRemaining, phase} = this.state;
+      const {breakLength, sessionLength} = this.state;
       // Decrement the timer
       secondsRemaining--;
 
@@ -116,7 +117,7 @@ class App extends React.Component {
       }
 
       // When the primary session is over, switch over to break time
-      if(minutesRemaining < 0 && secondsRemaining > 0){
+      if(minutesRemaining < 0 && secondsRemaining > 0 && phase === PHASE_SESSION){
         minutesRemaining = breakLength;
         minutesRemaining--;
         secondsRemaining = 59;
@@ -141,7 +142,7 @@ class App extends React.Component {
     }
     
     if(newActive){
-      const id = window.setInterval(timer, 1000);
+      const id = window.setInterval(timer, 10);
       
       // Use a ref to store the id from setInterval (this API is silly, but ok)
       this.intervalIdRef.current = id;
@@ -171,7 +172,6 @@ class App extends React.Component {
     if(!settings){
       settings = this.getDefaultSettings();
     }
-
     // Allow custom passthrough
     this.setState(settings);
 
