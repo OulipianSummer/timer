@@ -7,14 +7,6 @@ import {
   Button, ButtonGroup, Container, Card, Row, Col
 } from 'react-bootstrap';
 
-/*const Button = ReactBootstrap.Button;
-const Container = ReactBootstrap.Container;
-const Card = ReactBootstrap.Card;
-const Row = ReactBootstrap.Row;
-const Col = ReactBootstrap.Col;
-const ButtonGroup = ReactBootstrap.ButtonGroup;
-*/
-
 const PHASE_BREAK = 'break';
 const PHASE_SESSION = 'session';
 
@@ -116,29 +108,43 @@ class App extends React.Component {
         secondsRemaining = 59;
       }
 
-      // When the primary session is over, switch over to break time
-      if(minutesRemaining < 0 && secondsRemaining > 0 && phase === PHASE_SESSION){
-        minutesRemaining = breakLength;
-        minutesRemaining--;
-        secondsRemaining = 59;
-        phase = PHASE_BREAK;
-        this.ringBell();
+      // Allow the timer to read 00:00 before switching the phase (part of a test requirement)
+      if(secondsRemaining === 0 && minutesRemaining === 0){
+        if(phase === PHASE_BREAK){
+          phase = PHASE_SESSION;
+        } else {
+          phase = PHASE_BREAK;
+        }
+
+        this.setState({phase: phase});
+
       }
 
-      if(minutesRemaining === 0 && secondsRemaining === 0 && phase === PHASE_BREAK){
-        this.restart({
-          breakLength: breakLength,
-          sessionLength: sessionLength,
-          minutesRemaining: sessionLength,
-          secondsRemaining: 0,
-          active: true,
-          phase: PHASE_SESSION,
-        }, false);
+      // Restart the timer to the opposite phase once the either phase is over
+      if(minutesRemaining < 0 || secondsRemaining < 0){
+        if(phase === PHASE_BREAK){
+          this.restart({
+            breakLength: breakLength,
+            sessionLength: sessionLength,
+            minutesRemaining: breakLength,
+            secondsRemaining: 0,
+            active: true,
+          }, false);
+        } else {
+          this.restart({
+            breakLength: breakLength,
+            sessionLength: sessionLength,
+            minutesRemaining: sessionLength,
+            secondsRemaining: 0,
+            active: true,
+          }, false);
+        }
         this.ringBell();
         return;
       }
 
-      this.setState({breakLength: breakLength, minutesRemaining: minutesRemaining,secondsRemaining: secondsRemaining, phase: phase});
+      // Update the timer each second
+      this.setState({minutesRemaining: minutesRemaining,secondsRemaining: secondsRemaining});
     }
     
     if(newActive){
@@ -181,6 +187,12 @@ class App extends React.Component {
   
   // Restart the state to its defaults
   restart(settings = null, clear=true){
+
+    const bell = document.querySelector('#beep');
+    if(bell){
+      bell.pause();
+      bell.currentTime = 0;
+    }
 
     // Reset the timer to default
     if(!settings){
@@ -295,6 +307,5 @@ class App extends React.Component {
     );
   }
 }
-
 //Standard App Export
 export default App
