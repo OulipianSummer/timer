@@ -122,7 +122,7 @@ class App extends React.Component {
         minutesRemaining--;
         secondsRemaining = 59;
         phase = PHASE_BREAK;
-        // Ring dat bell
+        this.ringBell();
       }
 
       if(minutesRemaining === 0 && secondsRemaining === 0 && phase === PHASE_BREAK){
@@ -134,7 +134,7 @@ class App extends React.Component {
           active: true,
           phase: PHASE_SESSION,
         }, false);
-        // Ring dat bell
+        this.ringBell();
         return;
       }
 
@@ -142,7 +142,7 @@ class App extends React.Component {
     }
     
     if(newActive){
-      const id = window.setInterval(timer, 10);
+      const id = window.setInterval(timer, 1000);
       
       // Use a ref to store the id from setInterval (this API is silly, but ok)
       this.intervalIdRef.current = id;
@@ -162,6 +162,20 @@ class App extends React.Component {
       active: false,
       phase: PHASE_SESSION,
     };
+  }
+
+  ringBell(){
+    const bell = document.querySelector('#beep');
+    if(bell){
+      if(bell.duration > 0 && !bell.paused){
+        bell.cloneNode(true).play();
+        return;
+      }
+      
+      bell.play();
+
+
+    }
   }
  
   
@@ -220,8 +234,8 @@ class App extends React.Component {
                     <Row>
                       <Col>
                         <ButtonGroup id="break-controls">
-                          <Button active={active} onClick={ e => this.breakAlter('-')} id="break-decrement"><i className="fas fa-minus"></i></Button>
-                          <Button active={active} onClick={e => this.breakAlter('+')} id="break-increment"><i className="fas fa-plus"></i></Button>
+                          <Button variant="dark" active={active} onClick={ e => this.breakAlter('-')} id="break-decrement"><i className="fas fa-minus"></i></Button>
+                          <Button variant="dark" active={active} onClick={e => this.breakAlter('+')} id="break-increment"><i className="fas fa-plus"></i></Button>
                         </ButtonGroup>
                       </Col>
                     </Row>
@@ -239,8 +253,8 @@ class App extends React.Component {
                     <Row>
                       <Col>
                       <ButtonGroup id="session-controls">
-                          <Button active={active} onClick={e => this.sessionAlter('-')} id="session-decrement"><i className='fas fa-minus'></i></Button>
-                          <Button active={active} onClick={e => this.sessionAlter('+')} id="session-increment"><i className="fas fa-plus"></i></Button>
+                          <Button variant="dark" active={active} onClick={e => this.sessionAlter('-')} id="session-decrement"><i className='fas fa-minus'></i></Button>
+                          <Button variant="dark" active={active} onClick={e => this.sessionAlter('+')} id="session-increment"><i className="fas fa-plus"></i></Button>
                       </ButtonGroup>
                       </Col>
                     </Row>
@@ -258,15 +272,17 @@ class App extends React.Component {
                 <Row id="timer-controls" className="d-flex flex-column">
                   <Col>
                   <ButtonGroup>
-                    <Button onClick={e => this.updateActive()}>
+                    <Button variant="dark" onClick={e => this.updateActive()}>
                       <i id="start_stop" className={"fas fa-2x fa-" + (active ? 'pause' : 'play')}></i>
                     </Button>
-                    <Button onClick={e => this.restart()} id="reset"><i className="fas fa-2x fa-rotate-right"></i></Button>
+                    <Button variant="dark" onClick={e => this.restart()} id="reset"><i className="fas fa-2x fa-rotate-right"></i></Button>
                   </ButtonGroup>
                   </Col>
                 </Row>
 
-                <audio src="" />
+                <audio preload id="beep" type="audio/mpeg" src="https://www.soundjay.com/misc/bell-ringing-05.mp3" >
+                  Your browser does not support audio.
+                </audio>
 
                   
                 </Container>
