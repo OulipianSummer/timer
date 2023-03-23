@@ -1,7 +1,7 @@
 # 25 + 5 Clock
 This is a 25 + 5 clock (somtimes called a Pomodoro timer) made using React. This project was created a part of the Front End Development Libraries certification for Free Code Camp.
 
-This app is designed to alternate between two different timers: a "session" timer, where you might aim to get some work done,; and a "break timer", during which you take a break from your task. The clock will cycle for as long as you let it run, and it will play a tone whenever it switches from one phase to the other.
+This app is designed to alternate between two different timers: a "session" timer, where you might aim to get some work done; and a "break timer", during which you take a break from your task. The clock will cycle for as long as you let it run, and it will play a tone whenever it switches from one phase to the other.
 
 To view the user stories, tests, and design criteria, please visit [this link](https://www.freecodecamp.org/learn/front-end-development-libraries/front-end-development-libraries-projects/build-a-25--5-clock).
 
